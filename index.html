@@ -1,0 +1,304 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Emogibol - Manualidades</title>
+
+    <style>
+        body {
+            background: linear-gradient(135deg,#6a0dad,#a64bf4);
+            font-family: Arial;
+            text-align: center;
+            color: white;
+        }
+
+        .portada {
+            background: white;
+            color: black;
+            padding: 20px;
+            border-radius: 20px;
+            margin: 10px;
+        }
+
+        .catalogo {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .producto {
+            background: white;
+            color: black;
+            margin: 15px;
+            padding: 15px;
+            border-radius: 20px;
+            width: 200px;
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.3);
+            transition: 0.3s;
+        }
+
+            .producto:hover {
+                transform: scale(1.05);
+            }
+
+        img {
+            width: 100%;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .carrito {
+            position: fixed;
+            right: 10px;
+            top: 10px;
+            background: white;
+            color: black;
+            padding: 10px;
+            border-radius: 10px;
+            width: 230px;
+            max-height: 400px;
+            overflow: auto;
+        }
+
+        .panel {
+            position: fixed;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: white;
+            color: black;
+            padding: 10px;
+            border-radius: 15px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            background: rgba(0,0,0,0.8);
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+
+            .modal img {
+                margin-top: 50px;
+                max-width: 80%;
+            }
+
+        .whatsapp {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #25D366;
+            color: white;
+            padding: 15px;
+            border-radius: 50%;
+            text-decoration: none;
+            font-size: 20px;
+        }
+    </style>
+
+    <script>
+        let productos = JSON.parse(localStorage.getItem("productos")) || [];
+        let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
+        let favs = JSON.parse(localStorage.getItem("favs")) || [];
+        let img = "";
+        let admin = false;
+        let edit = null;
+
+        function save() {
+            localStorage.setItem("productos", JSON.stringify(productos));
+            localStorage.setItem("carrito", JSON.stringify(carrito));
+            localStorage.setItem("favs", JSON.stringify(favs));
+        }
+
+        function login() {
+            if (prompt("Clave") == "1234") {
+                admin = true;
+                document.getElementById("form").style.display = "block";
+                show();
+            }
+        }
+
+        function cargar(e) {
+            let r = new FileReader();
+            r.onload = x => img = x.target.result;
+            r.readAsDataURL(e.target.files[0]);
+        }
+
+        function add() {
+            let n = nombre.value, d = desc.value, p = parseFloat(precio.value);
+
+            if (edit != null) {
+                productos[edit] = { nombre: n, desc: d, precio: p, img };
+                edit = null;
+            } else {
+                productos.push({ nombre: n, desc: d, precio: p, img });
+            }
+
+            save();
+            show();
+        }
+
+        function show() {
+            catalogo.innerHTML = "";
+            productos.forEach((x, i) => {
+
+                catalogo.innerHTML += `
+<div class="producto">
+<img src="${x.img}" onclick="ver('${x.img}')">
+<h3>${x.nombre}</h3>
+<p>${x.desc}</p>
+<b>Bs.${x.precio}</b><br>
+
+<button onclick="car(${i})">🛒</button>
+<button onclick="fav(${i})">⭐</button>
+
+${admin ? `
+<button onclick="editP(${i})">✏️</button>
+<button onclick="del(${i})">❌</button>` : ""}
+</div>`;
+            });
+        }
+
+        function editP(i) {
+            let x = productos[i];
+            nombre.value = x.nombre;
+            desc.value = x.desc;
+            precio.value = x.precio;
+            img = x.img;
+            edit = i;
+        }
+
+        function del(i) {
+            if (confirm("Eliminar?")) {
+                productos.splice(i, 1);
+                save(); show();
+            }
+        }
+
+        function delAll() {
+            if (confirm("Todo?")) {
+                productos = [];
+                save(); show();
+            }
+        }
+
+        function car(i) {
+            let f = carrito.find(x => x.i == i);
+            if (f) f.c++;
+            else carrito.push({ ...productos[i], c: 1, i });
+            save(); showCar();
+        }
+
+        function change(i, c) {
+            carrito[i].c += c;
+            if (carrito[i].c <= 0) carrito.splice(i, 1);
+            save(); showCar();
+        }
+
+        function showCar() {
+            lista.innerHTML = "";
+            let t = 0;
+            carrito.forEach((x, i) => {
+                t += x.precio * x.c;
+                lista.innerHTML += `
+<div>
+${x.nombre} x${x.c}<br>
+<button onclick="change(${i},1)">+</button>
+<button onclick="change(${i},-1)">-</button>
+<button onclick="change(${i},-999)">❌</button>
+<hr>
+</div>`;
+            });
+            total.innerText = "Bs." + t;
+        }
+
+        function fav(i) {
+            favs.push(productos[i]);
+            save();
+            alert("Añadido a favoritos ⭐");
+        }
+
+        function buscar() {
+            let b = bus.value.toLowerCase();
+            catalogo.innerHTML = "";
+            productos.filter(x => x.nombre.toLowerCase().includes(b)).forEach(x => {
+                catalogo.innerHTML += `
+<div class="producto">
+<img src="${x.img}">
+<h3>${x.nombre}</h3>
+<p>${x.desc}</p>
+<b>Bs.${x.precio}</b>
+</div>`;
+            });
+        }
+
+        function pedir() {
+            let num = "59173834699";
+            let m = "Pedido:\n";
+            carrito.forEach(x => m += `${x.nombre} x${x.c}\n`);
+            window.open("https://wa.me/" + num + "?text=" + encodeURIComponent(m));
+        }
+
+        function ticket() {
+            let t = "TICKET\n";
+            carrito.forEach(x => t += `${x.nombre} x${x.c}\n`);
+            alert(t);
+        }
+
+        function ver(s) {
+            modal.style.display = "block";
+            big.src = s;
+        }
+
+        function cerrar() {
+            modal.style.display = "none";
+        }
+
+        window.onload = () => { show(); showCar(); }
+    </script>
+</head>
+
+<body>
+
+    <div class="portada">
+        <h1 style="color:#6a0dad;">EMOGIBOL</h1>
+        <p>🧶 Manualidades hechas con amor 🧶</p>
+    
+    </div>
+
+    <input id="bus" placeholder="🔍 Buscar" onkeyup="buscar()">
+
+    <div class="panel">
+        <button onclick="login()">🔐</button><br>
+        <button onclick="form.style.display='block'">➕</button><br>
+        <button onclick="delAll()">🗑️</button>
+    </div>
+
+    <div id="form" style="display:none;">
+        <input id="nombre" placeholder="Nombre"><br>
+<textarea id="desc"></textarea><br>
+        <input id="precio" type="number"><br>
+        <input type="file" onchange="cargar(event)"><br>
+        <button onclick="add()">Guardar</button>
+    </div>
+
+    <div id="catalogo" class="catalogo"></div>
+
+    <div class="carrito">
+        <h3>🛒</h3>
+        <div id="lista"></div>
+        <p id="total"></p>
+        <button onclick="ticket()">🧾</button>
+        <button onclick="pedir()">📲</button>
+    </div>
+
+    <div id="modal" class="modal" onclick="cerrar()">
+        <img id="big">
+    </div>
+
+    <a class="whatsapp" href="https://wa.me/59173834699">💬</a>
+
+</body>
+</html>

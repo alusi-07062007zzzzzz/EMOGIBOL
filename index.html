@@ -99,7 +99,20 @@
     </style>
 
     <script>
-        let productos = JSON.parse(localStorage.getItem("productos")) || [];
+        let productos = [
+{
+nombre:"Pulsera artesanal",
+desc:"Hecha a mano con hilo",
+precio:15,
+img:"https://i.imgur.com/8Km9tLL.jpg"
+},
+{
+nombre:"Collar tejido",
+desc:"Hermoso diseño artesanal",
+precio:25,
+img:"https://i.imgur.com/Ql7Y1.jpg"
+}
+];
         let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
         let favs = JSON.parse(localStorage.getItem("favs")) || [];
         let img = "";
